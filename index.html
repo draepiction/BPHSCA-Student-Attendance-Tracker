@@ -12,20 +12,19 @@
 
     :root {
       color-scheme: light;
-      /* BPHSCA Cream & Darkish Green Palette Definitions */
-      --bg: #fdfbf7;          /* Classic Cream Background */
-      --bg2: #f5f0e1;         /* Deeper Cream for panels */
-      --bg3: #eae2cc;         /* Active/Selected element highlight */
-      --border: #c4bca6;      /* Soft earthy outline border */
-      --text: #11291d;        /* Deep Darkish Green text */
-      --muted: #57665e;       /* Muted sage/forest tint */
-      --accent: #1b4d3e;      /* Core Institutional Darkish Green */
+      --bg: #fdfbf7;          
+      --bg2: #f5f0e1;         
+      --bg3: #eae2cc;         
+      --border: #c4bca6;      
+      --text: #11291d;        
+      --muted: #57665e;       
+      --accent: #1b4d3e;      
       
-      /* Status Palette Colors (High Contrast) */
       --color-att: #1b5e20;
       --color-late: #b45309;
       --color-abs: #b71c1c;
       --color-misd: #4a148c;
+      --color-ns: #475569;
 
       --font-display: 'Instrument Serif', Georgia, serif;
       --font-mono: 'DM Mono', 'Courier New', monospace;
@@ -33,18 +32,19 @@
 
     :root.dark-mode {
       color-scheme: dark;
-      --bg: #0a1410;          /* Deep Forest-Black */
-      --bg2: #11221a;         /* Darkish Green Container Surface */
-      --bg3: #193327;         /* Selected item highlight */
-      --border: #234737;      /* Subtle green-tinted borders */
-      --text: #f4f0e6;        /* Light Cream Soft Text */
-      --muted: #7ca38e;       /* Light Sage Green for subtitles */
-      --accent: #d4af37;      /* Gold Accent for Contrast in Dark Mode */
+      --bg: #0a1410;          
+      --bg2: #11221a;         
+      --bg3: #193327;         
+      --border: #234737;      
+      --text: #f4f0e6;        
+      --muted: #7ca38e;       
+      --accent: #d4af37;      
 
       --color-att: #4caf50;
       --color-late: #fbbf24;
       --color-abs: #f87171;
       --color-misd: #c084fc;
+      --color-ns: #94a3b8;
     }
 
     body {
@@ -91,6 +91,7 @@
       right: 0;
       display: flex;
       gap: 6px;
+      z-index: 1010;
     }
     .tool-btn {
       background: var(--bg2);
@@ -120,10 +121,16 @@
       font-weight: 500;
     }
 
-    .week-selector {
+    .week-selector-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .week-btn-container {
       display: flex;
       gap: 6px;
-      margin-bottom: 1.5rem;
       overflow-x: auto;
       align-items: center;
     }
@@ -150,7 +157,6 @@
     }
     
     .totals-toggle-btn {
-      margin-left: auto;
       background: rgba(27, 77, 62, 0.05);
       border: 0.5px solid var(--accent);
       color: var(--accent);
@@ -158,6 +164,27 @@
     .totals-toggle-btn.active {
       background: var(--accent);
       color: var(--bg);
+    }
+
+    .week-control-ops {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .ctrl-w-btn {
+      background: var(--bg3);
+      border: 0.5px solid var(--border);
+      color: var(--text);
+      font-weight: bold;
+      padding: 8px 14px;
+      font-size: 11px;
+      border-radius: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ctrl-w-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
     }
 
     .student-admin-panel {
@@ -171,8 +198,13 @@
       align-items: center;
       max-width: 480px;
     }
-    #newStudentInput {
+    .input-placeholder-container {
+      position: relative;
       flex: 1;
+      display: flex;
+    }
+    #newStudentInput {
+      width: 100%;
       background: var(--bg);
       border: 0.5px solid var(--border);
       color: var(--text);
@@ -185,8 +217,28 @@
     #newStudentInput:focus {
       border-color: var(--accent);
     }
+    .fading-placeholder-text {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 11px;
+      pointer-events: none;
+      transition: opacity 0.4s ease-in-out;
+      opacity: 1;
+      white-space: nowrap;
+    }
+    #newStudentInput:focus ~ .fading-placeholder-text,
+    #newStudentInput:not(:placeholder-shown) ~ .fading-placeholder-text {
+      opacity: 0 !important;
+    }
 
-    /* Advanced Controls Toolbar for Search and Sorting Components */
+    #stickySentinel {
+      height: 0px;
+      margin: 0;
+      padding: 0;
+    }
     .controls-toolbar {
       display: flex;
       flex-wrap: wrap;
@@ -197,7 +249,27 @@
       padding: 12px;
       border-radius: 6px;
       align-items: center;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .controls-toolbar.is-sticky {
+      position: fixed;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-5px);
+      width: calc(100% - 2.5rem);
+      max-width: 1200px;
+      z-index: 1000;
+      background: var(--bg2);
+      border: 1px solid var(--accent);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.16);
+      border-radius: 8px;
+      opacity: 0;
+      animation: stickyPopInAnim 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes stickyPopInAnim {
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
+    }
+
     .search-box-wrap {
       flex: 1;
       min-width: 240px;
@@ -233,13 +305,10 @@
       outline: none;
       cursor: pointer;
     }
-    .sort-select:focus {
-      border-color: var(--accent);
-    }
 
     .metrics-panel {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
       gap: 8px;
       margin-bottom: 1.75rem;
     }
@@ -296,13 +365,14 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 11px;
-      min-width: 950px;
+      min-width: 1000px;
     }
 
     th, td {
       border: 0.5px solid var(--border);
       padding: 6px 8px;
       vertical-align: middle;
+      transition: background-color 0.28s ease, opacity 0.28s ease;
     }
 
     th {
@@ -312,6 +382,18 @@
       background: var(--bg);
       position: relative;
       padding: 10px;
+    }
+
+    td.ns-darkened-col {
+      background-color: rgba(15, 23, 42, 0.12) !important;
+      opacity: 0.45;
+    }
+    .dark-mode td.ns-darkened-col {
+      background-color: rgba(0, 0, 0, 0.55) !important;
+      opacity: 0.35;
+    }
+    th.ns-darkened-header {
+      background-color: rgba(15, 23, 42, 0.2) !important;
     }
 
     .day-header {
@@ -336,11 +418,19 @@
     .day-toggle:hover {
       color: var(--text);
       background: var(--bg3);
-      border-color: var(--muted);
     }
     .day-toggle-att { color: var(--color-att); }
     .day-toggle-late { color: var(--color-late); }
     .day-toggle-abs { color: var(--color-abs); }
+    .day-toggle-ns { 
+      color: var(--color-ns); 
+      border: 0.5px solid var(--color-ns);
+      font-weight: bold;
+    }
+    .day-toggle-ns.active-ns {
+      background: var(--color-ns);
+      color: #ffffff;
+    }
 
     .student-name-cell {
       display: flex;
@@ -359,19 +449,11 @@
       opacity: 1;
     }
     .action-btn {
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 11px;
-      padding: 2px 4px;
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 11px; padding: 2px 4px;
     }
-    .action-btn:hover {
-      color: var(--accent);
-    }
-    .action-btn.del-btn:hover {
-      color: var(--color-abs);
-    }
+    .action-btn:hover { color: var(--accent); }
+    .action-btn.del-btn:hover { color: var(--color-abs); }
 
     .cell-box {
       display: flex;
@@ -388,32 +470,27 @@
       border: 0.5px solid var(--border);
       width: 100%;
     }
-    .dark-mode .att-group {
-      background: rgba(0,0,0,0.2);
-    }
+    .dark-mode .att-group { background: rgba(0,0,0,0.2); }
+    
     .att-btn {
-      flex: 1;
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-family: var(--font-mono);
-      font-size: 9.5px;
-      font-weight: 500;
-      padding: 3px 2px;
-      cursor: pointer;
-      border-radius: 2px;
-      user-select: none;
-      text-transform: uppercase;
+      flex: 1; background: none; border: none; color: var(--muted);
+      font-family: var(--font-mono); font-size: 9.5px; font-weight: 500;
+      padding: 3px 2px; cursor: pointer; border-radius: 2px;
+      user-select: none; text-transform: uppercase;
     }
-    .att-btn:hover {
-      color: var(--text);
-      background: var(--bg3);
-    }
+    .att-btn:hover { color: var(--text); background: var(--bg3); }
     .att-btn.active.att { background: var(--color-att); color: #ffffff; font-weight: bold; }
     .att-btn.active.late { background: var(--color-late); color: #ffffff; font-weight: bold; }
     .att-btn.active.abs { background: var(--color-abs); color: #ffffff; font-weight: bold; }
 
-    .misd-container {
+    .tag-container-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      align-items: flex-start;
+    }
+    .misd-container, .reason-container {
       display: flex;
       align-items: center;
       gap: 3px;
@@ -421,128 +498,80 @@
       justify-content: flex-start;
       flex-wrap: wrap;
     }
-    .add-misd-btn {
+    
+    .add-tag-trigger {
       background: none;
       border: 0.5px dashed var(--muted);
       color: var(--muted);
       font-family: var(--font-mono);
-      font-size: 8.5px;
+      font-size: 8px;
       padding: 1px 4px;
       border-radius: 3px;
       cursor: pointer;
       white-space: nowrap;
     }
-    .add-misd-btn:hover {
+    .add-tag-trigger:hover {
       border-color: var(--accent);
       color: var(--accent);
-      background: rgba(27, 77, 62, 0.05);
     }
+    
     .misd-tag {
       background: rgba(74, 20, 140, 0.06);
       border: 0.5px solid var(--color-misd);
       color: var(--color-misd);
-      font-size: 8px;
-      padding: 0px 4px;
-      border-radius: 2px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
+      font-size: 8px; padding: 0px 4px; border-radius: 2px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 2px;
     }
-    .dark-mode .misd-tag {
-      background: rgba(192, 132, 252, 0.15);
-    }
-    .misd-tag:hover {
-      background: var(--color-abs);
-      border-color: var(--color-abs);
-      color: #ffffff;
-      text-decoration: line-through;
+    .dark-mode .misd-tag { background: rgba(192, 132, 252, 0.15); }
+    .misd-tag:hover, .reason-tag:hover {
+      background: var(--color-abs); border-color: var(--color-abs);
+      color: #ffffff; text-decoration: line-through;
     }
 
+    .reason-tag {
+      background: rgba(180, 83, 9, 0.06);
+      border: 0.5px solid var(--color-late);
+      color: var(--color-late);
+      font-size: 8px; padding: 0px 4px; border-radius: 2px;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 2px;
+    }
+    .dark-mode .reason-tag { background: rgba(251, 191, 36, 0.15); }
+
     .system-glossary {
-      margin-top: 2rem;
-      border-top: 0.5px solid var(--border);
-      padding-top: 1.5rem;
+      margin-top: 2rem; border-top: 0.5px solid var(--border); padding-top: 1.5rem;
     }
     .glossary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-      gap: 10px;
-      margin-top: 0.75rem;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px; margin-top: 0.75rem;
     }
     .glossary-item {
-      background: var(--bg2);
-      border: 0.5px solid var(--border);
-      padding: 10px;
-      border-radius: 4px;
-      font-size: 11px;
-      line-height: 1.4;
+      background: var(--bg2); border: 0.5px solid var(--border);
+      padding: 10px; border-radius: 4px; font-size: 11px; line-height: 1.4;
     }
-    .glossary-term {
-      font-weight: bold;
-      color: var(--text);
-      display: inline-block;
-      margin-right: 4px;
-    }
+    .glossary-term { font-weight: bold; color: var(--text); display: inline-block; margin-right: 4px; }
     .glossary-term.g-att { color: var(--color-att); }
     .glossary-term.g-late { color: var(--color-late); }
     .glossary-term.g-abs { color: var(--color-abs); }
     .glossary-term.g-misd { color: var(--color-misd); }
-    .glossary-desc { color: var(--muted); }
+    .glossary-term.g-ns { color: var(--color-ns); }
 
     .data-operations-panel {
-      margin-top: 1.5rem;
-      border-top: 0.5px solid var(--border);
-      padding-top: 1.5rem;
-      margin-bottom: 3rem;
+      margin-top: 1.5rem; border-top: 0.5px solid var(--border);
+      padding-top: 1.5rem; margin-bottom: 3rem;
     }
     .ops-box {
-      background: var(--bg2);
-      border: 0.5px solid var(--border);
-      border-radius: 4px;
-      padding: 14px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
+      background: var(--bg2); border: 0.5px solid var(--border); border-radius: 4px;
+      padding: 14px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
     }
-    .ops-desc {
-      font-size: 11px;
-      color: var(--muted);
-      flex: 1;
-      min-width: 280px;
-      line-height: 1.4;
-    }
-    .ops-actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
+    .ops-desc { font-size: 11px; color: var(--muted); flex: 1; min-width: 280px; line-height: 1.4; }
+    .ops-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .ops-btn {
-      background: var(--bg3);
-      border: 0.5px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 7px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
+      background: var(--bg3); border: 0.5px solid var(--border); color: var(--text);
+      font-family: var(--font-mono); font-size: 11px; padding: 7px 12px;
+      border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
     }
-    .ops-btn:hover {
-      border-color: var(--muted);
-      background: var(--bg2);
-    }
-    .ops-btn-export {
-      border-color: var(--accent);
-      color: var(--text);
-      background: rgba(27, 77, 62, 0.04);
-    }
-    .ops-btn-export:hover {
-      background: var(--bg3);
-    }
+    .ops-btn:hover { border-color: var(--muted); background: var(--bg2); }
+    .ops-btn-export { border-color: var(--accent); color: var(--text); background: rgba(27, 77, 62, 0.04); }
     #hiddenImportEl { display: none; }
 
     #totalsPageContainer { display: none; }
@@ -553,79 +582,36 @@
     .stat-accent-abs { color: var(--color-abs); font-weight: bold; }
     .stat-accent-late { color: var(--color-late); font-weight: bold; }
     .stat-accent-misd { color: var(--color-misd); font-weight: bold; }
+    .stat-accent-ns { color: var(--color-ns); font-weight: bold; }
 
-    /* Modal Styling Components */
     .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.4);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.4); z-index: 1000; align-items: center; justify-content: center;
     }
     .modal-overlay.open { display: flex; }
     .modal-content {
-      background: var(--bg2);
-      border: 0.5px solid var(--border);
-      padding: 16px;
-      border-radius: 8px;
-      width: 100%;
-      max-width: 350px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      background: var(--bg2); border: 0.5px solid var(--border); padding: 16px;
+      border-radius: 8px; width: 100%; max-width: 350px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     }
     .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      border-bottom: 0.5px solid var(--border);
-      padding-bottom: 6px;
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; border-bottom: 0.5px solid var(--border); padding-bottom: 6px;
     }
-    .modal-header h3 {
-      font-family: var(--font-display);
-      font-size: 1.4rem;
-      font-weight: normal;
-    }
-    .modal-close {
-      background: none; border: none; color: var(--muted);
-      font-size: 20px; cursor: pointer;
-    }
-    .modal-close:hover { color: var(--text); }
-    .preset-label {
-      font-size: 10px; color: var(--muted);
-      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;
-    }
-    .preset-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-    }
+    .modal-header h3 { font-family: var(--font-display); font-size: 1.4rem; font-weight: normal; }
+    .modal-close { background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    .preset-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .preset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    
     .preset-btn {
-      background: var(--bg3);
-      border: 0.5px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 6px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      text-align: left;
+      background: var(--bg3); border: 0.5px solid var(--border); color: var(--text);
+      font-family: var(--font-mono); font-size: 11px; padding: 6px 8px; border-radius: 4px;
+      cursor: pointer; text-align: left;
     }
-    .preset-btn:hover {
-      border-color: var(--accent);
-      background: rgba(27, 77, 62, 0.05);
-    }
-    #customMisdInput {
-      flex: 1;
-      background: var(--bg);
-      border: 0.5px solid var(--border);
-      color: var(--text);
-      font-family: var(--font-mono);
-      font-size: 11px;
-      padding: 6px 10px;
-      border-radius: 4px;
-      outline: none;
+    .preset-btn:hover { border-color: var(--accent); background: rgba(27, 77, 62, 0.05); }
+    .custom-tag-input {
+      flex: 1; background: var(--bg); border: 0.5px solid var(--border);
+      color: var(--text); font-family: var(--font-mono); font-size: 11px;
+      padding: 6px 10px; border-radius: 4px; outline: none;
     }
   </style>
 </head>
@@ -643,28 +629,26 @@
   </div>
 
   <div class="section-label" id="lblSelectWeek">Select Active Tracking Week</div>
-  <div class="week-selector">
-    <button type="button" class="week-btn" data-week="1">Week 1</button>
-    <button type="button" class="week-btn" data-week="2">Week 2</button>
-    <button type="button" class="week-btn" data-week="3">Week 3</button>
-    <button type="button" class="week-btn" data-week="4">Week 4</button>
-    <button type="button" class="week-btn" data-week="5">Week 5</button>
-    <button type="button" class="week-btn" data-week="6">Week 6</button>
-    <button type="button" class="week-btn" data-week="7">Week 7</button>
-    <button type="button" class="week-btn" data-week="8">Week 8</button>
-    <button type="button" class="week-btn" data-week="9">Week 9</button>
-    <button type="button" class="week-btn" data-week="10">Week 10</button>
-    <button type="button" class="week-btn" data-week="11">Week 11</button>
-    <button type="button" class="week-btn totals-toggle-btn" id="showTotalsBtn">Σ All Totals</button>
+  <div class="week-selector-wrapper">
+    <div class="week-btn-container" id="weekButtonsDynamicGroup"></div>
+    <div class="week-control-ops">
+      <button type="button" class="ctrl-w-btn" onclick="reduceTermWeeksSeq()" title="Remove Last Week">[-]</button>
+      <button type="button" class="ctrl-w-btn" onclick="addTermWeekSeq()" title="Add Tracking Week">[+]</button>
+    </div>
   </div>
 
   <div class="section-label" id="lblManageClass">Manage Class Directory</div>
   <div class="student-admin-panel">
-    <input type="text" id="newStudentInput" placeholder="Type name and press enter...">
+    <div class="input-placeholder-container">
+      <input type="text" id="newStudentInput" placeholder=" ">
+      <span id="fadingPlaceholder" class="fading-placeholder-text">Type name...</span>
+    </div>
     <button type="button" class="ops-btn" id="addStudentBtn">+ Add Student</button>
   </div>
 
-  <div class="controls-toolbar">
+  <div id="stickySentinel"></div>
+
+  <div class="controls-toolbar" id="toolbarControlEl">
     <div class="search-box-wrap">
       <input type="text" id="dashboardSearchInput" oninput="handleSearchFiltering(this.value)" placeholder="🔍 Search student by name...">
     </div>
@@ -703,7 +687,13 @@
     <div class="metric-card">
       <span class="metric-title" id="mLabelMisd">Total Misdemeanors</span>
       <div class="metrics-values">
-        <span class="metric-val" id="stat-total-misd" style="color: var(--color-misd);">0<span class="lbl">Offenses</span></span>
+        <span class="metric-val" id="stat-total-misd" style="color: var(--color-misd);">0<span class="lbl">Misd</span></span>
+      </div>
+    </div>
+    <div class="metric-card">
+      <span class="metric-title" id="mLabelExempt">Total Exempt Days</span>
+      <div class="metrics-values">
+        <span class="metric-val" id="stat-total-exempt" style="color: var(--color-ns);">0<span class="lbl">Days</span></span>
       </div>
     </div>
   </div>
@@ -722,7 +712,9 @@
                   <button type="button" class="day-toggle day-toggle-att" onclick="toggleWholeDay('mon', 'attended')" title="Set all to Attended">✓</button>
                   <button type="button" class="day-toggle day-toggle-late" onclick="toggleWholeDay('mon', 'late')" title="Set all to Late">◷</button>
                   <button type="button" class="day-toggle day-toggle-abs" onclick="toggleWholeDay('mon', 'absent')" title="Set all to Absent">⦸</button>
+                  <button type="button" class="day-toggle day-toggle-ns" id="header-ns-mon" onclick="toggleNoSchoolDay('mon')" title="Toggle No School Day">NS</button>
                 </div>
+                <div id="day-stats-mon" style="font-size: 9px; margin-top: 5px; font-weight: normal; white-space: nowrap; text-transform: none;"></div>
               </div>
             </th>
             <th id="th-tue">
@@ -732,7 +724,9 @@
                   <button type="button" class="day-toggle day-toggle-att" onclick="toggleWholeDay('tue', 'attended')" title="Set all to Attended">✓</button>
                   <button type="button" class="day-toggle day-toggle-late" onclick="toggleWholeDay('tue', 'late')" title="Set all to Late">◷</button>
                   <button type="button" class="day-toggle day-toggle-abs" onclick="toggleWholeDay('tue', 'absent')" title="Set all to Absent">⦸</button>
+                  <button type="button" class="day-toggle day-toggle-ns" id="header-ns-tue" onclick="toggleNoSchoolDay('tue')" title="Toggle No School Day">NS</button>
                 </div>
+                <div id="day-stats-tue" style="font-size: 9px; margin-top: 5px; font-weight: normal; white-space: nowrap; text-transform: none;"></div>
               </div>
             </th>
             <th id="th-wed">
@@ -742,7 +736,9 @@
                   <button type="button" class="day-toggle day-toggle-att" onclick="toggleWholeDay('wed', 'attended')" title="Set all to Attended">✓</button>
                   <button type="button" class="day-toggle day-toggle-late" onclick="toggleWholeDay('wed', 'late')" title="Set all to Late">◷</button>
                   <button type="button" class="day-toggle day-toggle-abs" onclick="toggleWholeDay('wed', 'absent')" title="Set all to Absent">⦸</button>
+                  <button type="button" class="day-toggle day-toggle-ns" id="header-ns-wed" onclick="toggleNoSchoolDay('wed')" title="Toggle No School Day">NS</button>
                 </div>
+                <div id="day-stats-wed" style="font-size: 9px; margin-top: 5px; font-weight: normal; white-space: nowrap; text-transform: none;"></div>
               </div>
             </th>
             <th id="th-thu">
@@ -752,7 +748,9 @@
                   <button type="button" class="day-toggle day-toggle-att" onclick="toggleWholeDay('thu', 'attended')" title="Set all to Attended">✓</button>
                   <button type="button" class="day-toggle day-toggle-late" onclick="toggleWholeDay('thu', 'late')" title="Set all to Late">◷</button>
                   <button type="button" class="day-toggle day-toggle-abs" onclick="toggleWholeDay('thu', 'absent')" title="Set all to Absent">⦸</button>
+                  <button type="button" class="day-toggle day-toggle-ns" id="header-ns-thu" onclick="toggleNoSchoolDay('thu')" title="Toggle No School Day">NS</button>
                 </div>
+                <div id="day-stats-thu" style="font-size: 9px; margin-top: 5px; font-weight: normal; white-space: nowrap; text-transform: none;"></div>
               </div>
             </th>
             <th id="th-fri">
@@ -762,7 +760,9 @@
                   <button type="button" class="day-toggle day-toggle-att" onclick="toggleWholeDay('fri', 'attended')" title="Set all to Attended">✓</button>
                   <button type="button" class="day-toggle day-toggle-late" onclick="toggleWholeDay('fri', 'late')" title="Set all to Late">◷</button>
                   <button type="button" class="day-toggle day-toggle-abs" onclick="toggleWholeDay('fri', 'absent')" title="Set all to Absent">⦸</button>
+                  <button type="button" class="day-toggle day-toggle-ns" id="header-ns-fri" onclick="toggleNoSchoolDay('fri')" title="Toggle No School Day">NS</button>
                 </div>
+                <div id="day-stats-fri" style="font-size: 9px; margin-top: 5px; font-weight: normal; white-space: nowrap; text-transform: none;"></div>
               </div>
             </th>
             <th style="width: 110px;" class="text-center" id="thWeeklyTotals">Weekly Totals</th>
@@ -779,11 +779,12 @@
       <table class="totals-table">
         <thead>
           <tr>
-            <th style="width: 250px;" id="thCumName">Student Name</th>
+            <th style="width: 230px;" id="thCumName">Student Name</th>
             <th class="text-center" id="thCumAtt">Total Attended</th>
             <th class="text-center" id="thCumLate">Total Late</th>
             <th class="text-center" id="thCumAbs">Total Absent</th>
             <th class="text-center" id="thCumMisd">Total Misdemeanors</th>
+            <th class="text-center" id="thCumExempt">Total Exempt Days</th>
           </tr>
         </thead>
         <tbody id="totalsTableBody"></tbody>
@@ -803,7 +804,7 @@
         All entries populate an isolated application state store in your system's browser local cache storage.
       </div>
       <div class="ops-actions">
-        <button type="button" class="ops-btn ops-btn-export" onclick="exportToSpreadsheet()">📊 Export Spreadsheet (CSV)</button>
+        <button type="button" class="ops-btn ops-btn-export" onclick="exportToSpreadsheet()">📊 Export Matrix Spreadsheet (CSV)</button>
         <button type="button" class="ops-btn" onclick="exportDataBackup()" id="btnSaveBackup">⭳ Save Backup Payload</button>
         <button type="button" class="ops-btn" onclick="triggerImportSelection()" id="btnLoadBackup">⭱ Load Data Backup</button>
         <input type="file" id="hiddenImportEl" accept=".json" onchange="importDataBackup(event)">
@@ -830,15 +831,39 @@
         <button type="button" class="preset-btn" onclick="addPresetMisd('Noise Making')">🗣️ Loud Noise</button>
       </div>
       <div style="margin-top: 14px; display: flex; gap: 6px;">
-        <input type="text" id="customMisdInput" placeholder="Or type a custom offense...">
+        <input type="text" id="customMisdInput" class="custom-tag-input" placeholder="Or type custom offense...">
         <button type="button" class="ops-btn" onclick="addCustomMisd()" id="modalAddBtn">Add</button>
       </div>
     </div>
   </div>
 </div>
 
+<div id="reasonModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="rModalTitleText">Log Lateness Reason</h3>
+      <button type="button" class="modal-close" onclick="closeReasonModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 11px; color: var(--muted); margin-bottom: 12px;" id="rModalContextText"></p>
+      <div class="preset-label" id="rModalPresetLabel">Common Presets:</div>
+      <div class="preset-grid">
+        <button type="button" class="preset-btn" onclick="addPresetReason('Heavy Traffic')">🚗 Traffic</button>
+        <button type="button" class="preset-btn" onclick="addPresetReason('Late Awakening')">⏰ Late Awakening</button>
+        <button type="button" class="preset-btn" onclick="addPresetReason('Bad Weather')">🌧️ Bad Weather</button>
+        <button type="button" class="preset-btn" onclick="addPresetReason('Transport Delay')">🚌 Transit Delay</button>
+        <button type="button" class="preset-btn" onclick="addPresetReason('Family Matter')">🏠 Family Matter</button>
+        <button type="button" class="preset-btn" onclick="addPresetReason('Health Issue')">🤒 Unwell</button>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 6px;">
+        <input type="text" id="customReasonInput" class="custom-tag-input" placeholder="Or log custom reason...">
+        <button type="button" class="ops-btn" onclick="addCustomReason()" id="rModalAddBtn">Add</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Core Base Classlist Mock Setup Configuration
   const initialClasslist = [
     "K. Silang", "V. Datinguinoo", "J. Dela Cruz", "A. Martija", "W. Hernandez",
     "J. Barrameda", "D. Palogme", "J. Javier", "G. Badillo", "J. Balmes",
@@ -846,7 +871,12 @@
     "G. Masangcay", "A. Salazar", "J. Macatangay", "A. Masangcay", "M. Libatique"
   ];
 
-  // Internationalization Bilingual Engine Localization Configuration Data
+  const placeholderExampleNames = [
+    "K. Silang", "V. Datinguinoo", "J. Dela Cruz", "A. Martija", 
+    "W. Hernandez", "J. Barrameda", "A. Salazar", "J. Macatangay"
+  ];
+  let activePlaceholderNameIndex = 0;
+
   const i18n = {
     en: {
       title: "BPHSCA <em>Student Attendance & Discipline</em>",
@@ -854,7 +884,6 @@
       lblSelectWeek: "Select Active Tracking Week",
       lblManageClass: "Manage Class Directory",
       addStudent: "+ Add Student",
-      inputPlaceholder: "Type name (e.g. amado martija) and press enter...",
       searchPlaceholder: "🔍 Search student by name...",
       lblSortBy: "Sort By:",
       optAlpha: "Alphabetical (A-Z)",
@@ -868,6 +897,7 @@
       mLabelLate: "Total Late",
       mLabelAbs: "Total Absent",
       mLabelMisd: "Total Misdemeanors",
+      mLabelExempt: "Total Exempt Days",
       lblWeeklyGrid: "Weekly Attendance Grid (Compact Multi-Selector)",
       thStudentName: "Student Name",
       thWeeklyTotals: "Weekly Totals",
@@ -877,21 +907,28 @@
       thCumLate: "Total Late",
       thCumAbs: "Total Absent",
       thCumMisd: "Total Misdemeanors",
+      thCumExempt: "Total Exempt Days",
       lblGlossary: "Interface Status Glossary",
       lblDataOps: "Dashboard Maintenance & Local Storage Operations",
-      lblOpsDesc: "All entries populate an isolated application state store in your system's browser local cache storage. Export clean spreadsheets or system data configurations.",
+      lblOpsDesc: "All entries populate an isolated application state store in your system's browser local cache storage. Export matrix records or system backups.",
       btnSaveBackup: "⭳ Save Backup Payload",
       btnLoadBackup: "⭱ Load Data Backup",
       modalTitleText: "Record Offense",
       modalPresetLabel: "Preset Infractions:",
       modalCustomPlaceholder: "Or type a custom offense...",
       modalAddBtn: "Add",
+      rModalTitleText: "Log Lateness Reason",
+      rModalPresetLabel: "Common Presets:",
+      rModalCustomPlaceholder: "Or log custom reason...",
+      rModalAddBtn: "Add",
+      placeholderPrefix: "Type name (e.g., ",
       days: { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday" },
       glossary: [
-        { term: "Att", class: "g-att", desc: "Attended. Confirms student presence in the classroom for the full tracking period." },
-        { term: "Late", class: "g-late", desc: "Tardy Arrival. Flags late entry. Cell receives subtle warning colors." },
-        { term: "Absent", class: "g-abs", desc: "Absent. Flagged absolute full-day absence from the academic track." },
-        { term: "Misd", class: "g-misd", desc: "Misdemeanor. Tracks student discipline rules infraction tags. Hover to reveal deletion cross." }
+        { term: "Att", class: "g-att", desc: "Attended. Confirms student presence in the classroom for the full daily track." },
+        { term: "Late", class: "g-late", desc: "Tardy Arrival. Flags late entry. Allows recording reasons via internal tag systems." },
+        { term: "Absent", class: "g-abs", desc: "Absent. Flagged absolute full-day absence from the academic schedule." },
+        { term: "Misd", class: "g-misd", desc: "Misdemeanor. Tracks student discipline rules infraction tags. Click tag to delete." },
+        { term: "NS", class: "g-ns", desc: "No School. Suspends schedule for that specific day. Darkens column and acts as an absolute metric exemption." }
       ]
     },
     tl: {
@@ -900,7 +937,6 @@
       lblSelectWeek: "Piliin ang Linggo ng Pagsubaybay",
       lblManageClass: "Pamahalaan ang Listahan ng mga Mag-aaral",
       addStudent: "+ Magdagdag",
-      inputPlaceholder: "I-type ang pangalan (hal. amado martija)...",
       searchPlaceholder: "🔍 Maghanap ng mag-aaral...",
       lblSortBy: "I-uri Ayon sa:",
       optAlpha: "Alpabetiko (A-Z)",
@@ -914,15 +950,17 @@
       mLabelLate: "Kabuuang Late",
       mLabelAbs: "Kabuuang Absent",
       mLabelMisd: "Kabuuang Misdemeanors",
+      mLabelExempt: "Kabuuang Araw na Walang Pasok",
       lblWeeklyGrid: "Talahanayan ng Attendance (Compact Multi-Selector)",
       thStudentName: "Pangalan ng Mag-aaral",
       thWeeklyTotals: "Kabuuang Lingguhan",
-      lblCumOverview: "Pangkalahatang Pagsusuri ng Termino (Linggo 1-11 Kabuuan)",
+      lblCumOverview: "Pangkalahatang Pagsusuri ng Termino (Kabuuan)",
       thCumName: "Pangalan ng Mag-aaral",
       thCumAtt: "Kabuuang Attended",
       thCumLate: "Kabuuang Late",
       thCumAbs: "Kabuuang Absent",
       thCumMisd: "Kabuuang Misdemeanors",
+      thCumExempt: "Kabuuang Araw na Walang Pasok",
       lblGlossary: "Glosaryo ng mga Status sa Interface",
       lblDataOps: "Pagpapanatili ng Dashboard at Operasyon ng Local Storage",
       lblOpsDesc: "Ang lahat ng tala ay naka-save sa local cache ng iyong browser. Maaari kang mag-export ng spreadsheet file (.csv) o mag-save ng backup logs.",
@@ -932,12 +970,18 @@
       modalPresetLabel: "Mga Karaniwang Paglabag:",
       modalCustomPlaceholder: "O mag-type ng ibang paglabag...",
       modalAddBtn: "Idagdag",
+      rModalTitleText: "Itala ang Dahilan ng Pagkahuli",
+      rModalPresetLabel: "Karaniwang Dahilan:",
+      rModalCustomPlaceholder: "O isulat ang partikular na dahilan...",
+      rModalAddBtn: "Idagdag",
+      placeholderPrefix: "I-type ang pangalan (hal., ",
       days: { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday" },
       glossary: [
-        { term: "Att", class: "g-att", desc: "Attended. Kinukumpirma ang pagiging pumasok ng mag-aaral sa loob ng silid-aralan sa buong itinakdang oras." },
-        { term: "Late", class: "g-late", desc: "Late. Nahuli sa pagdating sa klase. May kaukulang kulay ang kahon bilang babala." },
+        { term: "Att", class: "g-att", desc: "Attended. Kinukumpirma ang pagpasok ng mag-aaral sa loob ng silid-aralan sa araw na iyon." },
+        { term: "Late", class: "g-late", desc: "Late. Nahuli sa pagpasok. Nagbibigay-daan upang magtala ng rason tulad ng traffic." },
         { term: "Absent", class: "g-abs", desc: "Absent. Hindi pumasok sa klase sa buong araw." },
-        { term: "Misd", class: "g-misd", desc: "Misdemeanor. Nagtatala ng mga paglabag sa disiplina. I-hover ang mouse sa tag upang burahin ito." }
+        { term: "Misd", class: "g-misd", desc: "Misdemeanor. Nagtatala ng mga paglabag sa disiplina. I-click ang tag upang burahin." },
+        { term: "NS", class: "g-ns", desc: "No School. Nagdedeklara ng walang pasok sa araw na iyon. Nagpapadilim sa kolum at hindi nagpapababa ng grado." }
       ]
     }
   };
@@ -945,7 +989,10 @@
   let students = [];
   let attendance = {};
   let misdemeanors = {};
+  let latenessReasons = {}; 
+  let noSchoolDays = {};    
 
+  let totalWeeks = 11;
   let activeWeek = 1;
   let isDisplayingGrandTotals = false;
   let currentLang = 'en'; 
@@ -956,7 +1003,6 @@
   let currentModalStudentId = '';
   let currentModalDay = '';
 
-  // Theme Core Layout Cache System Setup (Light Mode Default Override Framework)
   const htmlEl = document.documentElement;
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   let storedTheme = localStorage.getItem('bphscaTheme') || 'light';
@@ -980,13 +1026,51 @@
     }
   }
 
-  // Language Node Translation Routing Controller Trigger
   const langToggleBtn = document.getElementById('langToggleBtn');
   langToggleBtn.onclick = function() {
     currentLang = currentLang === 'en' ? 'tl' : 'en';
     langToggleBtn.textContent = `🌐 Wika: ${currentLang.toUpperCase()}`;
     updateInterfaceLanguage();
   };
+
+  function initStickyToolbarObserver() {
+    const sentinel = document.getElementById('stickySentinel');
+    const toolbar = document.getElementById('toolbarControlEl');
+    
+    if (sentinel && toolbar) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) {
+            toolbar.classList.add('is-sticky');
+          } else {
+            toolbar.classList.remove('is-sticky');
+          }
+        });
+      }, { threshold: 0, rootMargin: "-10px 0px 0px 0px" });
+      
+      observer.observe(sentinel);
+    }
+  }
+
+  function cycleFadingInputPlaceholder() {
+    const fadingEl = document.getElementById('fadingPlaceholder');
+    if (!fadingEl) return;
+    
+    // Smooth transition fade out first
+    fadingEl.style.opacity = 0;
+    
+    // Swap contents after transition timing completes
+    setTimeout(() => {
+      activePlaceholderNameIndex = (activePlaceholderNameIndex + 1) % placeholderExampleNames.length;
+      const dict = i18n[currentLang];
+      fadingEl.textContent = `${dict.placeholderPrefix}${placeholderExampleNames[activePlaceholderNameIndex]})`;
+      
+      const nativeInput = document.getElementById('newStudentInput');
+      if (document.activeElement !== nativeInput && nativeInput.value === "") {
+        fadingEl.style.opacity = 1;
+      }
+    }, 400); 
+  }
 
   function updateInterfaceLanguage() {
     const dict = i18n[currentLang];
@@ -996,11 +1080,9 @@
     document.getElementById('lblSelectWeek').textContent = dict.lblSelectWeek;
     document.getElementById('lblManageClass').textContent = dict.lblManageClass;
     document.getElementById('addStudentBtn').textContent = dict.addStudent;
-    document.getElementById('newStudentInput').placeholder = dict.inputPlaceholder;
     document.getElementById('dashboardSearchInput').placeholder = dict.searchPlaceholder;
     document.getElementById('lblSortBy').textContent = dict.lblSortBy;
     
-    // Sort Select Localization
     document.getElementById('optAlpha').textContent = dict.optAlpha;
     document.getElementById('optMostAtt').textContent = dict.optMostAtt;
     document.getElementById('optMostLate').textContent = dict.optMostLate;
@@ -1011,6 +1093,7 @@
     document.getElementById('mLabelLate').textContent = dict.mLabelLate;
     document.getElementById('mLabelAbs').textContent = dict.mLabelAbs;
     document.getElementById('mLabelMisd').textContent = dict.mLabelMisd;
+    document.getElementById('mLabelExempt').textContent = dict.mLabelExempt;
     document.getElementById('lblWeeklyGrid').textContent = dict.lblWeeklyGrid;
     document.getElementById('thStudentName').textContent = dict.thStudentName;
     document.getElementById('thWeeklyTotals').textContent = dict.thWeeklyTotals;
@@ -1020,6 +1103,7 @@
     document.getElementById('thCumLate').textContent = dict.thCumLate;
     document.getElementById('thCumAbs').textContent = dict.thCumAbs;
     document.getElementById('thCumMisd').textContent = dict.thCumMisd;
+    document.getElementById('thCumExempt').textContent = dict.thCumExempt;
     document.getElementById('lblGlossary').textContent = dict.lblGlossary;
     document.getElementById('lblDataOps').textContent = dict.lblDataOps;
     document.getElementById('lblOpsDesc').textContent = dict.lblOpsDesc;
@@ -1030,6 +1114,13 @@
     document.getElementById('modalPresetLabel').textContent = dict.modalPresetLabel;
     document.getElementById('customMisdInput').placeholder = dict.modalCustomPlaceholder;
     document.getElementById('modalAddBtn').textContent = dict.modalAddBtn;
+
+    document.getElementById('rModalTitleText').textContent = dict.rModalTitleText;
+    document.getElementById('rModalPresetLabel').textContent = dict.rModalPresetLabel;
+    document.getElementById('customReasonInput').placeholder = dict.rModalCustomPlaceholder;
+    document.getElementById('rModalAddBtn').textContent = dict.rModalAddBtn;
+
+    document.getElementById('fadingPlaceholder').textContent = `${dict.placeholderPrefix}${placeholderExampleNames[activePlaceholderNameIndex]})`;
 
     document.querySelectorAll('.day-title-text').forEach(el => {
       const dCode = el.getAttribute('data-day');
@@ -1047,11 +1138,13 @@
       `;
     });
 
+    renderWeekSelector();
     renderDashboard();
   }
 
-  // Database Synchronization Router Engine
   function initDatabaseSync() {
+    totalWeeks = parseInt(localStorage.getItem('bphscaTotalWeeks')) || 11;
+    
     let cachedStudents = localStorage.getItem('bphscaStudents_List');
     if (!cachedStudents) {
       students = initialClasslist.map((name, index) => ({
@@ -1067,30 +1160,115 @@
     try {
       attendance = JSON.parse(localStorage.getItem('bphscaAttendance')) || {};
       misdemeanors = JSON.parse(localStorage.getItem('bphscaMisdemeanors')) || {};
+      latenessReasons = JSON.parse(localStorage.getItem('bphscaLatenessReasons')) || {};
+      noSchoolDays = JSON.parse(localStorage.getItem('bphscaNoSchoolDays')) || {};
     } catch(err) {
-      attendance = {};
-      misdemeanors = {};
+      attendance = {}; misdemeanors = {}; latenessReasons = {}; noSchoolDays = {};
     }
   }
 
-  // Smart Formatting Name Tool (Converts inputs automatically to e.g., "A. Martija")
   function formatStudentNameInput(inputStr) {
     let trimmed = inputStr.trim().replace(/\s+/g, ' ');
     if (!trimmed) return "";
-    
-    // Split input words via empty space or dots
     let parts = trimmed.split(/[\s.]+/).filter(Boolean);
     if (parts.length < 2) {
       return parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase();
     }
-    
     let initial = parts[0].charAt(0).toUpperCase();
     let surname = parts.slice(1).map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
-    
     return `${initial}. ${surname}`;
   }
 
-  // Real-Time Query State Synchronization Actions
+  function renderWeekSelector() {
+    const container = document.getElementById('weekButtonsDynamicGroup');
+    container.innerHTML = '';
+    
+    for (let w = 1; w <= totalWeeks; w++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'week-btn';
+      if (!isDisplayingGrandTotals && activeWeek === w) btn.className += ' active';
+      btn.textContent = `Week ${w}`;
+      btn.onclick = function() {
+        activeWeek = w;
+        isDisplayingGrandTotals = false;
+        renderWeekSelector();
+        renderDashboard();
+      };
+      container.appendChild(btn);
+    }
+
+    const totalBtn = document.createElement('button');
+    totalBtn.type = 'button';
+    totalBtn.className = 'week-btn totals-toggle-btn';
+    if (isDisplayingGrandTotals) totalBtn.className += ' active';
+    totalBtn.id = 'showTotalsBtn';
+    totalBtn.textContent = 'Σ All Totals';
+    totalBtn.onclick = function() {
+      isDisplayingGrandTotals = true;
+      renderWeekSelector();
+      renderDashboard();
+    };
+    container.appendChild(totalBtn);
+  }
+
+  function addTermWeekSeq() {
+    totalWeeks++;
+    localStorage.setItem('bphscaTotalWeeks', totalWeeks);
+    renderWeekSelector();
+    if (!isDisplayingGrandTotals) renderDashboard();
+  }
+
+  function reduceTermWeeksSeq() {
+    if (totalWeeks <= 1) return;
+    
+    let targetWeekPrefix = `W${totalWeeks}-`;
+    let blockAndWarn = false;
+
+    for (let key in attendance) {
+      if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
+    }
+    if (!blockAndWarn) {
+      for (let key in misdemeanors) {
+        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
+      }
+    }
+    if (!blockAndWarn) {
+      for (let key in latenessReasons) {
+        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
+      }
+    }
+    if (!blockAndWarn) {
+      ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
+        if (noSchoolDays[`W${totalWeeks}-${d}`]) blockAndWarn = true;
+      });
+    }
+
+    if (blockAndWarn) {
+      const promptWarningText = currentLang === 'en'
+        ? `Are you sure? Week ${totalWeeks} contains recorded system tracking data. Removing it will erase all entries permanently.`
+        : `Sigurado ka ba? Ang Week ${totalWeeks} ay naglalaman ng mga tala. Ang pagbawas nito ay permanenteng bubura sa mga ito.`;
+      if (!confirm(promptWarningText)) return;
+    }
+
+    for (let key in attendance) { if (key.startsWith(targetWeekPrefix)) delete attendance[key]; }
+    for (let key in misdemeanors) { if (key.startsWith(targetWeekPrefix)) delete misdemeanors[key]; }
+    for (let key in latenessReasons) { if (key.startsWith(targetWeekPrefix)) delete latenessReasons[key]; }
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => { delete noSchoolDays[`W${totalWeeks}-${d}`]; });
+
+    localStorage.setItem('bphscaAttendance', JSON.stringify(attendance));
+    localStorage.setItem('bphscaMisdemeanors', JSON.stringify(misdemeanors));
+    localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
+    localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
+
+    totalWeeks--;
+    localStorage.setItem('bphscaTotalWeeks', totalWeeks);
+    if (activeWeek > totalWeeks) activeWeek = totalWeeks;
+    
+    renderWeekSelector();
+    renderDashboard();
+  }
+
   function handleSearchFiltering(value) {
     searchQuery = value;
     renderDashboard();
@@ -1101,12 +1279,12 @@
     renderDashboard();
   }
 
-  // Helper Module to compute localized metrics data block for conditional sorting
   function computeStudentMetricStats(studentId) {
     let att = 0, late = 0, abs = 0, misd = 0;
     if (isDisplayingGrandTotals) {
-      for (let w = 1; w <= 11; w++) {
+      for (let w = 1; w <= totalWeeks; w++) {
         ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+          if (noSchoolDays[`W${w}-${day}`]) return; 
           const key = `W${w}-${studentId}-${day}`;
           if (attendance[key] === 'attended') att++;
           else if (attendance[key] === 'late') late++;
@@ -1116,6 +1294,7 @@
       }
     } else {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+        if (noSchoolDays[`W${activeWeek}-${day}`]) return;
         const key = `W${activeWeek}-${studentId}-${day}`;
         if (attendance[key] === 'attended') att++;
         else if (attendance[key] === 'late') late++;
@@ -1126,43 +1305,30 @@
     return { att, late, abs, misd };
   }
 
-  // Centralized Processor to calculate filtered and sorted collection arrays
   function getFilteredAndSortedClasslist() {
     let result = students.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
     result.sort((a, b) => {
-      if (sortBy === 'alphabetical') {
-        return a.name.localeCompare(b.name);
-      }
-      
+      if (sortBy === 'alphabetical') return a.name.localeCompare(b.name);
       let statsA = computeStudentMetricStats(a.id);
       let statsB = computeStudentMetricStats(b.id);
-      
       if (sortBy === 'most_att') return statsB.att - statsA.att;
       if (sortBy === 'most_late') return statsB.late - statsA.late;
       if (sortBy === 'most_abs') return statsB.abs - statsA.abs;
       if (sortBy === 'most_misd') return statsB.misd - statsA.misd;
-      
       return 0;
     });
-    
     return result;
   }
 
-  // Core UI Dashboard Render Process Loop Pipeline
   function renderDashboard() {
     const dict = i18n[currentLang];
     const panelContextLabel = document.getElementById('panelContextLabel');
     const weeklyGridContainer = document.getElementById('weeklyGridContainer');
     const totalsPageContainer = document.getElementById('totalsPageContainer');
-    const showTotalsBtn = document.getElementById('showTotalsBtn');
-    const weekButtons = document.querySelectorAll('.week-btn:not(.totals-toggle-btn)');
 
     let datasetToRender = getFilteredAndSortedClasslist();
 
     if (isDisplayingGrandTotals) {
-      weekButtons.forEach(b => b.classList.remove('active'));
-      showTotalsBtn.classList.add('active');
       weeklyGridContainer.style.display = 'none';
       totalsPageContainer.style.display = 'block';
       panelContextLabel.textContent = dict.contextTotals;
@@ -1171,24 +1337,55 @@
       return;
     }
 
-    showTotalsBtn.classList.remove('active');
-    weekButtons.forEach(b => {
-      if (parseInt(b.getAttribute('data-week')) === activeWeek) b.classList.add('active');
-      else b.classList.remove('active');
-    });
-
     weeklyGridContainer.style.display = 'block';
     totalsPageContainer.style.display = 'none';
     panelContextLabel.textContent = `${dict.contextWeekly} - Week ${activeWeek}`;
+
+    // Compute exempt days cleanly based ONLY on unique calendar days, not multiplied by students
+    let weekExemptDays = 0;
+    ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+      const isNS = noSchoolDays[`W${activeWeek}-${day}`];
+      const thEl = document.getElementById(`th-${day}`);
+      const btnNS = document.getElementById(`header-ns-${day}`);
+      const statsEl = document.getElementById(`day-stats-${day}`);
+      
+      if (isNS) {
+        weekExemptDays++;
+        thEl.classList.add('ns-darkened-header');
+        btnNS.classList.add('active-ns');
+        statsEl.innerHTML = `<span style="color: var(--color-ns); font-weight: bold;">EXEMPT</span>`;
+      } else {
+        thEl.classList.remove('ns-darkened-header');
+        btnNS.classList.remove('active-ns');
+        
+        // Calculate daily additions / total metrics per day
+        let dAtt = 0, dLate = 0, dAbs = 0, dMisd = 0;
+        students.forEach(s => {
+          const key = `W${activeWeek}-${s.id}-${day}`;
+          const status = attendance[key];
+          if (status === 'attended') dAtt++;
+          else if (status === 'late') dLate++;
+          else if (status === 'absent') dAbs++;
+          if (misdemeanors[key]) dMisd += misdemeanors[key].length;
+        });
+        
+        statsEl.innerHTML = `
+          <span style="color: var(--color-att); font-weight:bold;">${dAtt}✓</span> 
+          <span style="color: var(--color-late); font-weight:bold;">${dLate}◷</span> 
+          <span style="color: var(--color-abs); font-weight:bold;">${dAbs}⦸</span> 
+          <span style="color: var(--color-misd); font-weight:bold;">${dMisd}M</span>
+        `;
+      }
+    });
 
     const tbody = document.getElementById('attendanceTableBody');
     tbody.innerHTML = '';
 
     let weekAtt = 0, weekLate = 0, weekAbs = 0, weekMisd = 0;
 
-    // Calculate absolute metrics based on FULL master class list to preserve accuracy across search filters
     students.forEach(s => {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+        if (noSchoolDays[`W${activeWeek}-${day}`]) return; 
         const key = `W${activeWeek}-${s.id}-${day}`;
         if (attendance[key] === 'attended') weekAtt++;
         else if (attendance[key] === 'late') weekLate++;
@@ -1197,7 +1394,6 @@
       });
     });
 
-    // Populate actual rendered view rows
     datasetToRender.forEach(s => {
       let sAtt = 0, sLate = 0, sAbs = 0, sMisd = 0;
       const tr = document.createElement('tr');
@@ -1214,24 +1410,41 @@
       tr.appendChild(nameTd);
 
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+        const isNS = noSchoolDays[`W${activeWeek}-${day}`];
         const key = `W${activeWeek}-${s.id}-${day}`;
         const status = attendance[key] || '';
         
+        let td = document.createElement('td');
+        if (isNS) {
+          td.className = 'ns-darkened-col';
+          td.innerHTML = `<div style="text-align:center; font-size:10px; color:var(--muted); font-weight:bold; letter-spacing:0.05em;">EXEMPT (NS)</div>`;
+          tr.appendChild(td);
+          return;
+        }
+
         if (status === 'attended') sAtt++;
         else if (status === 'late') sLate++;
         else if (status === 'absent') sAbs++;
 
         const listMisd = misdemeanors[key] || [];
+        const listReasons = latenessReasons[key] || [];
         sMisd += listMisd.length;
 
-        let td = document.createElement('td');
-        if (status === 'absent') td.style.background = 'rgba(183, 28, 28, 0.05)';
-        else if (status === 'late') td.style.background = 'rgba(180, 83, 9, 0.05)';
+        if (status === 'absent') td.style.background = 'rgba(183, 28, 28, 0.04)';
+        else if (status === 'late') td.style.background = 'rgba(180, 83, 9, 0.04)';
         else if (status === 'attended') td.style.background = 'rgba(27, 94, 32, 0.02)';
 
-        let tagsHtml = listMisd.map((m, idx) => `
+        let misdTagsHtml = listMisd.map((m, idx) => `
           <span class="misd-tag" onclick="deleteMisd('${s.id}', '${day}', ${idx})" title="Delete tag">${m} ✕</span>
         `).join('');
+
+        let reasonTagsHtml = listReasons.map((r, idx) => `
+          <span class="reason-tag" onclick="deleteReason('${s.id}', '${day}', ${idx})" title="Delete reason">${r} ✕</span>
+        `).join('');
+
+        let reasonTriggerBtn = (status === 'late') 
+          ? `<button type="button" class="add-tag-trigger" style="border-color:var(--color-late); color:var(--color-late);" onclick="openReasonModal('${s.id}', '${day}')">+ Reason</button>`
+          : '';
 
         td.innerHTML = `
           <div class="cell-box">
@@ -1240,9 +1453,15 @@
               <button type="button" class="att-btn late ${status === 'late' ? 'active' : ''}" onclick="setAttendanceStatus('${s.id}', '${day}', 'late')">Late</button>
               <button type="button" class="att-btn abs ${status === 'absent' ? 'active' : ''}" onclick="setAttendanceStatus('${s.id}', '${day}', 'absent')">Abs</button>
             </div>
-            <div class="misd-container">
-              <button type="button" class="add-misd-btn" onclick="openMisdModal('${s.id}', '${day}')">+ Misd</button>
-              ${tagsHtml}
+            <div class="tag-container-block">
+              <div class="misd-container">
+                <button type="button" class="add-tag-trigger" onclick="openMisdModal('${s.id}', '${day}')">+ Misd</button>
+                ${misdTagsHtml}
+              </div>
+              <div class="reason-container" style="margin-top: 1px;">
+                ${reasonTriggerBtn}
+                ${reasonTagsHtml}
+              </div>
             </div>
           </div>
         `;
@@ -1251,7 +1470,7 @@
 
       let totalsTd = document.createElement('td');
       totalsTd.className = 'text-center';
-      totalsTd.style.fontSize = '10.5px';
+      totalsTd.style.fontSize = '10px';
       totalsTd.style.whiteSpace = 'nowrap';
       totalsTd.innerHTML = `
         <span style="color: var(--color-att); font-weight:bold;">${sAtt}A</span> | 
@@ -1267,16 +1486,26 @@
     document.getElementById('stat-total-late').innerHTML = `${weekLate}<span class="lbl">Late</span>`;
     document.getElementById('stat-total-abs').innerHTML = `${weekAbs}<span class="lbl">Abs</span>`;
     document.getElementById('stat-total-misd').innerHTML = `${weekMisd}<span class="lbl">Misd</span>`;
+    document.getElementById('stat-total-exempt').innerHTML = `${weekExemptDays}<span class="lbl">Days</span>`;
   }
 
   function renderTotalsPage(dataset) {
     const tbody = document.getElementById('totalsTableBody');
     tbody.innerHTML = '';
     
+    // Total calendar exempt days across all tracking weeks
+    let totExempt = 0;
+    for (let w = 1; w <= totalWeeks; w++) {
+      ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+        if (noSchoolDays[`W${w}-${day}`]) totExempt++;
+      });
+    }
+
     dataset.forEach(s => {
       let totAtt = 0, totLate = 0, totAbs = 0, totMisd = 0;
-      for (let w = 1; w <= 11; w++) {
+      for (let w = 1; w <= totalWeeks; w++) {
         ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+          if (noSchoolDays[`W${w}-${day}`]) return;
           const key = `W${w}-${s.id}-${day}`;
           const status = attendance[key];
           if (status === 'attended') totAtt++;
@@ -1293,16 +1522,26 @@
         <td class="text-center stat-accent-late">${totLate}</td>
         <td class="text-center stat-accent-abs">${totAbs}</td>
         <td class="text-center stat-accent-misd">${totMisd}</td>
+        <td class="text-center stat-accent-ns">${totExempt}</td>
       `;
       tbody.appendChild(tr);
     });
   }
 
   function calculateGlobalMetrics() {
-    let globalAtt = 0, globalLate = 0, globalAbs = 0, globalMisd = 0;
+    let globalAtt = 0, globalLate = 0, globalAbs = 0, globalMisd = 0, globalExempt = 0;
+    
+    // Clean unique absolute calendar metrics computation
+    for (let w = 1; w <= totalWeeks; w++) {
+      ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+        if (noSchoolDays[`W${w}-${day}`]) globalExempt++;
+      });
+    }
+
     students.forEach(s => {
-      for (let w = 1; w <= 11; w++) {
+      for (let w = 1; w <= totalWeeks; w++) {
         ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
+          if (noSchoolDays[`W${w}-${day}`]) return;
           const key = `W${w}-${s.id}-${day}`;
           const status = attendance[key];
           if (status === 'attended') globalAtt++;
@@ -1317,6 +1556,7 @@
     document.getElementById('stat-total-late').innerHTML = `${globalLate}<span class="lbl">Late</span>`;
     document.getElementById('stat-total-abs').innerHTML = `${globalAbs}<span class="lbl">Abs</span>`;
     document.getElementById('stat-total-misd').innerHTML = `${globalMisd}<span class="lbl">Misd</span>`;
+    document.getElementById('stat-total-exempt').innerHTML = `${globalExempt}<span class="lbl">Days</span>`;
   }
 
   function setAttendanceStatus(studentId, day, status) {
@@ -1328,6 +1568,7 @@
   }
 
   function toggleWholeDay(day, status) {
+    if (noSchoolDays[`W${activeWeek}-${day}`]) return; 
     let dataset = getFilteredAndSortedClasslist();
     let allHaveIt = dataset.every(s => attendance[`W${activeWeek}-${s.id}-${day}`] === status);
     dataset.forEach(s => {
@@ -1339,13 +1580,21 @@
     renderDashboard();
   }
 
-  // Student Input Directory Creation Action Module (With Auto-Formatting Integration)
+  function toggleNoSchoolDay(day) {
+    const key = `W${activeWeek}-${day}`;
+    if (noSchoolDays[key]) {
+      delete noSchoolDays[key];
+    } else {
+      noSchoolDays[key] = true;
+    }
+    localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
+    renderDashboard();
+  }
+
   document.getElementById('addStudentBtn').onclick = function() {
     const input = document.getElementById('newStudentInput');
     const processedName = formatStudentNameInput(input.value);
-    
     if (processedName === '') return;
-    
     const newId = 'stud_' + Date.now();
     students.push({ id: newId, name: processedName });
     localStorage.setItem('bphscaStudents_List', JSON.stringify(students));
@@ -1369,15 +1618,12 @@
     }
   }
 
-  // Safe Directory Splice Deletion Pipeline Engine Module
   function deleteStudentFromDirectory(studentId) {
     const student = students.find(s => s.id === studentId);
     if (!student) return;
-    
     const confirmationText = currentLang === 'en'
       ? `Are you sure you want to completely remove "${student.name}" and erase all associated attendance records?`
       : `Sigurado ka ba na nais mong tanggalin si "${student.name}" at burahin ang lahat ng kanyang records?`;
-      
     if (confirm(confirmationText)) {
       students = students.filter(s => s.id !== studentId);
       localStorage.setItem('bphscaStudents_List', JSON.stringify(students));
@@ -1385,20 +1631,17 @@
     }
   }
 
-  // Misdemeanor Inline Modal Operations
   function openMisdModal(studentId, day) {
-    currentModalStudentId = studentId;
-    currentModalDay = day;
+    currentModalStudentId = studentId; currentModalDay = day;
     const student = students.find(s => s.id === studentId);
     document.getElementById('modalContextText').textContent = `${student ? student.name : ''} -> ${day.toUpperCase()}`;
     document.getElementById('misdModal').classList.add('open');
   }
-
   function closeMisdModal() {
     document.getElementById('misdModal').classList.remove('open');
+    document.getElementById('customMisdInput').value = '';
     currentModalStudentId = ''; currentModalDay = '';
   }
-
   function addPresetMisd(text) {
     if (!currentModalStudentId || !currentModalDay) return;
     const key = `W${activeWeek}-${currentModalStudentId}-${currentModalDay}`;
@@ -1408,15 +1651,12 @@
     closeMisdModal();
     renderDashboard();
   }
-
   function addCustomMisd() {
     const input = document.getElementById('customMisdInput');
     const text = input.value.trim();
     if (text === '') return;
     addPresetMisd(text);
-    input.value = '';
   }
-
   function deleteMisd(studentId, day, index) {
     const key = `W${activeWeek}-${studentId}-${day}`;
     if (misdemeanors[key] && misdemeanors[key][index] !== undefined) {
@@ -1427,54 +1667,129 @@
     }
   }
 
-  // Universal Spreadsheet Converter Engine Execution (.CSV File Generator)
-  function exportToSpreadsheet() {
-    let csvRows = [];
-    csvRows.push("Student Name,Week,Day,Attendance Status,Misdemeanor Infractions");
+  function openReasonModal(studentId, day) {
+    currentModalStudentId = studentId; currentModalDay = day;
+    const student = students.find(s => s.id === studentId);
+    document.getElementById('rModalContextText').textContent = `${student ? student.name : ''} -> ${day.toUpperCase()}`;
+    document.getElementById('reasonModal').classList.add('open');
+  }
+  function closeReasonModal() {
+    document.getElementById('reasonModal').classList.remove('open');
+    document.getElementById('customReasonInput').value = '';
+    currentModalStudentId = ''; currentModalDay = '';
+  }
+  function addPresetReason(text) {
+    if (!currentModalStudentId || !currentModalDay) return;
+    const key = `W${activeWeek}-${currentModalStudentId}-${currentModalDay}`;
+    if (!latenessReasons[key]) latenessReasons[key] = [];
+    latenessReasons[key].push(text);
+    localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
+    closeReasonModal();
+    renderDashboard();
+  }
+  function addCustomReason() {
+    const input = document.getElementById('customReasonInput');
+    const text = input.value.trim();
+    if (text === '') return;
+    addPresetReason(text);
+  }
+  function deleteReason(studentId, day, index) {
+    const key = `W${activeWeek}-${studentId}-${day}`;
+    if (latenessReasons[key] && latenessReasons[key][index] !== undefined) {
+      latenessReasons[key].splice(index, 1);
+      if (latenessReasons[key].length === 0) delete latenessReasons[key];
+      localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
+      renderDashboard();
+    }
+  }
 
+  function exportToSpreadsheet() {
+    let headers = ["Student Name"];
     const dayKeys = ['mon', 'tue', 'wed', 'thu', 'fri'];
-    const labelDays = { mon: "Monday", tue: "Tuesday", wed: "Wednesday", thu: "Thursday", fri: "Friday" };
+    const labelDays = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri" };
+    
+    for (let w = 1; w <= totalWeeks; w++) {
+      dayKeys.forEach(d => {
+        headers.push(`W${w}-${labelDays[d]}`);
+      });
+    }
+    
+    headers.push("Total Attended", "Total Late", "Total Absent", "Total Misdemeanors", "Total Exempt Days");
+    let csvRows = [headers.join(",")];
+    
+    // Total calendar exempt days inside the system payload
+    let totExempt = 0;
+    for (let w = 1; w <= totalWeeks; w++) {
+      dayKeys.forEach(day => {
+        if (noSchoolDays[`W${w}-${day}`]) totExempt++;
+      });
+    }
 
     students.forEach(s => {
-      for (let w = 1; w <= 11; w++) {
+      let rowData = [`"${s.name.replace(/"/g, '""')}"`];
+      let totAtt = 0, totLate = 0, totAbs = 0, totMisd = 0;
+      
+      for (let w = 1; w <= totalWeeks; w++) {
         dayKeys.forEach(day => {
-          const key = `W${w}-${s.id}-${day}`;
-          let status = attendance[key] || "No Record";
-          if(status !== "No Record") {
-            status = status.charAt(0).toUpperCase() + status.slice(1);
+          const isNS = noSchoolDays[`W${w}-${day}`];
+          if (isNS) {
+            rowData.push('"NS"');
+            return;
           }
           
+          const key = `W${w}-${s.id}-${day}`;
+          const status = attendance[key] || '';
+          
+          if (status === 'attended') totAtt++;
+          else if (status === 'late') totLate++;
+          else if (status === 'absent') totAbs++;
+          
           let listMisd = misdemeanors[key] || [];
-          let misdString = listMisd.join(" | ");
-
-          let cleanName = s.name.replace(/"/g, '""');
-          let cleanMisd = misdString.replace(/"/g, '""');
-
-          csvRows.push(`"${cleanName}",Week ${w},${labelDays[day]},"${status}","${cleanMisd}"`);
+          let listReasons = latenessReasons[key] || [];
+          totMisd += listMisd.length;
+          
+          let cellValueStr = "-";
+          if (status === 'attended') cellValueStr = "Att";
+          else if (status === 'late') cellValueStr = "Late";
+          else if (status === 'absent') cellValueStr = "Abs";
+          
+          if (listReasons.length > 0) {
+            cellValueStr += ` (${listReasons.join("; ")})`;
+          }
+          if (listMisd.length > 0) {
+            cellValueStr += ` [Misd: ${listMisd.join("; ")}]`;
+          }
+          
+          rowData.push(`"${cellValueStr.replace(/"/g, '""')}"`);
         });
       }
+      
+      rowData.push(totAtt, totLate, totAbs, totMisd, totExempt);
+      csvRows.push(rowData.join(","));
     });
 
     const csvContent = "\uFEFF" + csvRows.join("\n"); 
     const dataBlob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const downloadAnchor = document.createElement("a");
     downloadAnchor.href = URL.createObjectURL(dataBlob);
-    downloadAnchor.download = `BPHSCA_Class_Attendance_Spreadsheet.csv`;
+    downloadAnchor.download = `BPHSCA_Class_Record_Matrix_Format1.csv`;
     downloadAnchor.click();
   }
 
-  // Backup Payload Data Recovery Management Suite
   function exportDataBackup() {
     const payload = {
-      version: "4.0-SearchSortEnabled",
+      version: "5.2-MatrixAndFadingSupport",
+      totalWeeks: totalWeeks,
       students: students,
       attendance: attendance,
-      misdemeanors: misdemeanors
+      misdemeanors: misdemeanors,
+      latenessReasons: latenessReasons,
+      noSchoolDays: noSchoolDays
     };
     const dataBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(dataBlob);
-    a.download = `BPHSCA_Attendance_SystemBackup.json`;
+    a.download = `BPHSCA_SystemBackup_Payload.json`;
     a.click();
   }
 
@@ -1487,39 +1802,37 @@
     reader.onload = function(e) {
       try {
         const parsed = JSON.parse(e.target.result);
-        if (parsed.students && parsed.attendance && parsed.misdemeanors) { 
+        if (parsed.students && parsed.attendance) { 
+          totalWeeks = parsed.totalWeeks || 11;
           students = parsed.students || [];
           attendance = parsed.attendance || {};
           misdemeanors = parsed.misdemeanors || {};
+          latenessReasons = parsed.latenessReasons || {};
+          noSchoolDays = parsed.noSchoolDays || {};
+          
+          localStorage.setItem('bphscaTotalWeeks', totalWeeks);
           localStorage.setItem('bphscaStudents_List', JSON.stringify(students));
           localStorage.setItem('bphscaAttendance', JSON.stringify(attendance));
           localStorage.setItem('bphscaMisdemeanors', JSON.stringify(misdemeanors));
-          alert("Backup deployed successfully into local cache storage.");
+          localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
+          localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
+          
+          alert("Backup data integration deployed successfully.");
           isDisplayingGrandTotals = false;
-          renderDashboard();
+          activeWeek = 1;
+          updateInterfaceLanguage();
         }
-      } catch (err) { alert("Error parsing storage configuration file."); }
+      } catch (err) { alert("Error parsing storage JSON data schema payload configuration file."); }
     };
     reader.readAsText(file);
   }
 
-  // Week Selector Interface Button Binder Routing
-  document.querySelectorAll('.week-btn:not(.totals-toggle-btn)').forEach(btn => {
-    btn.onclick = function() {
-      activeWeek = parseInt(this.getAttribute('data-week'));
-      isDisplayingGrandTotals = false;
-      renderDashboard();
-    };
-  });
-
-  document.getElementById('showTotalsBtn').onclick = function() {
-    isDisplayingGrandTotals = true;
-    renderDashboard();
-  };
-
-  // Run Dashboard Application Initialization Process Loop
   initDatabaseSync();
   updateInterfaceLanguage();
+  initStickyToolbarObserver();
+  
+  // Initialize dynamic placeholder fade sequence tracker
+  setInterval(cycleFadingInputPlaceholder, 3000);
 </script>
 
 </body>
