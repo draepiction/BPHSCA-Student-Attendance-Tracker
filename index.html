@@ -537,6 +537,41 @@
     }
     .dark-mode .reason-tag { background: rgba(251, 191, 36, 0.15); }
 
+    .clean-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+      padding: 4px;
+    }
+    .clean-meta {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.2;
+    }
+    .clean-status-bar {
+      display: flex;
+      gap: 1px;
+      background: rgba(0,0,0,0.05);
+      padding: 2px;
+      border-radius: 4px;
+      border: 0.5px solid var(--border);
+      width: 100%;
+      margin-top: 4px;
+    }
+    .dark-mode .clean-status-bar { background: rgba(0,0,0,0.2); }
+    .clean-status-btn {
+      flex: 1; background: none; border: none; color: var(--muted);
+      font-family: var(--font-mono); font-size: 9px; font-weight: 500;
+      padding: 3px 2px; cursor: pointer; border-radius: 2px;
+      user-select: none; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .clean-status-btn:hover { color: var(--text); background: var(--bg3); }
+    .clean-status-btn.active.good { background: var(--color-att); color: #ffffff; font-weight: bold; }
+    .clean-status-btn.active.needs { background: var(--color-late); color: #ffffff; font-weight: bold; }
+
     .system-glossary {
       margin-top: 2rem; border-top: 0.5px solid var(--border); padding-top: 1.5rem;
     }
@@ -773,6 +808,25 @@
     </div>
   </div>
 
+  <div id="cleanersGridContainer" style="margin-top: 2rem;">
+    <div class="section-label" id="lblCleanersGrid">Cleaners Duty Rotation & Performance Tracker (Active Week)</div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align: left; width: 210px;">Scheduled Duty Area</th>
+            <th>Monday</th>
+            <th>Tuesday</th>
+            <th>Wednesday</th>
+            <th>Thursday</th>
+            <th>Friday</th>
+          </tr>
+        </thead>
+        <tbody id="cleanersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
   <div id="totalsPageContainer">
     <div class="section-label" id="lblCumOverview">Cumulative Term Overview (Weeks 1-11 Aggregate Summary)</div>
     <div class="table-container">
@@ -876,6 +930,22 @@
     "W. Hernandez", "J. Barrameda", "A. Salazar", "J. Macatangay"
   ];
   let activePlaceholderNameIndex = 0;
+
+  const groupMembers = {
+    1: ["Angelo Salazar", "Dave Falogme", "Jewel Barrameda", "Jerica De la Cruz"],
+    2: ["Andrew Papa", "Justin Evangelista", "Trixie Martizana", "Justine Kaye Balina", "Mariel Labatique"],
+    3: ["Kenedy Nieves", "Vince Datinguinoo", "Jhoan Mae Coliat", "Althea Masangcay"],
+    4: ["Gian Masangcay", "Kenneth Bisa", "Andrei Martija", "Jessa Brucal", "CJ Sagarino"],
+    5: ["Wilmer Hernandez", "Jeromy Balina", "Janellie Balmes", "Jada Javier"]
+  };
+
+  const cleaningSchedule = {
+    "Room": { mon: 1, tue: 2, wed: 3, thu: 4, fri: 5 },
+    "Stairs": { mon: 2, tue: 3, wed: 4, thu: 5, fri: 1 },
+    "Hallway": { mon: 3, tue: 4, wed: 5, thu: 1, fri: 2 },
+    "Front Ground": { mon: 4, tue: 5, wed: 1, thu: 2, fri: 3 },
+    "Pathway & Side Ground": { mon: 5, tue: 1, wed: 2, thu: 3, fri: 4 }
+  };
 
   const i18n = {
     en: {
@@ -991,6 +1061,7 @@
   let misdemeanors = {};
   let latenessReasons = {}; 
   let noSchoolDays = {};    
+  let cleaningStatus = {};
 
   let totalWeeks = 11;
   let activeWeek = 1;
@@ -1056,10 +1127,8 @@
     const fadingEl = document.getElementById('fadingPlaceholder');
     if (!fadingEl) return;
     
-    // Smooth transition fade out first
     fadingEl.style.opacity = 0;
     
-    // Swap contents after transition timing completes
     setTimeout(() => {
       activePlaceholderNameIndex = (activePlaceholderNameIndex + 1) % placeholderExampleNames.length;
       const dict = i18n[currentLang];
@@ -1162,8 +1231,9 @@
       misdemeanors = JSON.parse(localStorage.getItem('bphscaMisdemeanors')) || {};
       latenessReasons = JSON.parse(localStorage.getItem('bphscaLatenessReasons')) || {};
       noSchoolDays = JSON.parse(localStorage.getItem('bphscaNoSchoolDays')) || {};
+      cleaningStatus = JSON.parse(localStorage.getItem('bphscaCleaningStatus')) || {};
     } catch(err) {
-      attendance = {}; misdemeanors = {}; latenessReasons = {}; noSchoolDays = {};
+      attendance = {}; misdemeanors = {}; latenessReasons = {}; noSchoolDays = {}; cleaningStatus = {};
     }
   }
 
@@ -1239,6 +1309,11 @@
       }
     }
     if (!blockAndWarn) {
+      for (let key in cleaningStatus) {
+        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
+      }
+    }
+    if (!blockAndWarn) {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
         if (noSchoolDays[`W${totalWeeks}-${d}`]) blockAndWarn = true;
       });
@@ -1254,12 +1329,14 @@
     for (let key in attendance) { if (key.startsWith(targetWeekPrefix)) delete attendance[key]; }
     for (let key in misdemeanors) { if (key.startsWith(targetWeekPrefix)) delete misdemeanors[key]; }
     for (let key in latenessReasons) { if (key.startsWith(targetWeekPrefix)) delete latenessReasons[key]; }
+    for (let key in cleaningStatus) { if (key.startsWith(targetWeekPrefix)) delete cleaningStatus[key]; }
     ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => { delete noSchoolDays[`W${totalWeeks}-${d}`]; });
 
     localStorage.setItem('bphscaAttendance', JSON.stringify(attendance));
     localStorage.setItem('bphscaMisdemeanors', JSON.stringify(misdemeanors));
     localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
     localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
+    localStorage.setItem('bphscaCleaningStatus', JSON.stringify(cleaningStatus));
 
     totalWeeks--;
     localStorage.setItem('bphscaTotalWeeks', totalWeeks);
@@ -1320,6 +1397,74 @@
     return result;
   }
 
+  function renderCleanersRotation() {
+    const tbody = document.getElementById('cleanersTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    if (isDisplayingGrandTotals) {
+      document.getElementById('cleanersGridContainer').style.display = 'none';
+      return;
+    }
+    document.getElementById('cleanersGridContainer').style.display = 'block';
+
+    const areas = ["Room", "Stairs", "Hallway", "Front Ground", "Pathway & Side Ground"];
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+    areas.forEach(area => {
+      const tr = document.createElement('tr');
+      
+      let areaTd = document.createElement('td');
+      areaTd.innerHTML = `<strong>${area}</strong>`;
+      tr.appendChild(areaTd);
+
+      days.forEach(day => {
+        const isNS = noSchoolDays[`W${activeWeek}-${day}`];
+        let td = document.createElement('td');
+
+        if (isNS) {
+          td.className = 'ns-darkened-col';
+          td.innerHTML = `<div style="text-align:center; font-size:10px; color:var(--muted); font-weight:bold;">EXEMPT (NS)</div>`;
+          tr.appendChild(td);
+          return;
+        }
+
+        const groupNum = cleaningSchedule[area][day];
+        const membersList = groupMembers[groupNum].join(', ');
+        const key = `W${activeWeek}-${area}-${day}`;
+        const currentStatus = cleaningStatus[key] || 'pending';
+
+        if (currentStatus === 'good') td.style.background = 'rgba(27, 94, 32, 0.02)';
+        else if (currentStatus === 'needs') td.style.background = 'rgba(183, 28, 28, 0.03)';
+
+        td.innerHTML = `
+          <div class="clean-group">
+            <span style="font-weight: 500; color: var(--text);">Group ${groupNum}</span>
+            <span class="clean-meta" title="${membersList}">${groupMembers[groupNum][0]} +${groupMembers[groupNum].length - 1} more</span>
+            <div class="clean-status-bar">
+              <button type="button" class="clean-status-btn good ${currentStatus === 'good' ? 'active' : ''}" onclick="setCleaningStatus('${area}', '${day}', 'good')">Good</button>
+              <button type="button" class="clean-status-btn needs ${currentStatus === 'needs' ? 'active' : ''}" onclick="setCleaningStatus('${area}', '${day}', 'needs')">Needs Work</button>
+            </div>
+          </div>
+        `;
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function setCleaningStatus(area, day, status) {
+    const key = `W${activeWeek}-${area}-${day}`;
+    if (cleaningStatus[key] === status) {
+      delete cleaningStatus[key];
+    } else {
+      cleaningStatus[key] = status;
+    }
+    localStorage.setItem('bphscaCleaningStatus', JSON.stringify(cleaningStatus));
+    renderDashboard();
+  }
+
   function renderDashboard() {
     const dict = i18n[currentLang];
     const panelContextLabel = document.getElementById('panelContextLabel');
@@ -1331,6 +1476,7 @@
     if (isDisplayingGrandTotals) {
       weeklyGridContainer.style.display = 'none';
       totalsPageContainer.style.display = 'block';
+      document.getElementById('cleanersGridContainer').style.display = 'none';
       panelContextLabel.textContent = dict.contextTotals;
       renderTotalsPage(datasetToRender);
       calculateGlobalMetrics();
@@ -1341,7 +1487,6 @@
     totalsPageContainer.style.display = 'none';
     panelContextLabel.textContent = `${dict.contextWeekly} - Week ${activeWeek}`;
 
-    // Compute exempt days cleanly based ONLY on unique calendar days, not multiplied by students
     let weekExemptDays = 0;
     ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
       const isNS = noSchoolDays[`W${activeWeek}-${day}`];
@@ -1358,7 +1503,6 @@
         thEl.classList.remove('ns-darkened-header');
         btnNS.classList.remove('active-ns');
         
-        // Calculate daily additions / total metrics per day
         let dAtt = 0, dLate = 0, dAbs = 0, dMisd = 0;
         students.forEach(s => {
           const key = `W${activeWeek}-${s.id}-${day}`;
@@ -1487,13 +1631,14 @@
     document.getElementById('stat-total-abs').innerHTML = `${weekAbs}<span class="lbl">Abs</span>`;
     document.getElementById('stat-total-misd').innerHTML = `${weekMisd}<span class="lbl">Misd</span>`;
     document.getElementById('stat-total-exempt').innerHTML = `${weekExemptDays}<span class="lbl">Days</span>`;
+
+    renderCleanersRotation();
   }
 
   function renderTotalsPage(dataset) {
     const tbody = document.getElementById('totalsTableBody');
     tbody.innerHTML = '';
     
-    // Total calendar exempt days across all tracking weeks
     let totExempt = 0;
     for (let w = 1; w <= totalWeeks; w++) {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
@@ -1531,7 +1676,6 @@
   function calculateGlobalMetrics() {
     let globalAtt = 0, globalLate = 0, globalAbs = 0, globalMisd = 0, globalExempt = 0;
     
-    // Clean unique absolute calendar metrics computation
     for (let w = 1; w <= totalWeeks; w++) {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(day => {
         if (noSchoolDays[`W${w}-${day}`]) globalExempt++;
@@ -1717,7 +1861,6 @@
     headers.push("Total Attended", "Total Late", "Total Absent", "Total Misdemeanors", "Total Exempt Days");
     let csvRows = [headers.join(",")];
     
-    // Total calendar exempt days inside the system payload
     let totExempt = 0;
     for (let w = 1; w <= totalWeeks; w++) {
       dayKeys.forEach(day => {
@@ -1778,13 +1921,14 @@
 
   function exportDataBackup() {
     const payload = {
-      version: "5.2-MatrixAndFadingSupport",
+      version: "5.3-MatrixWithCleaners",
       totalWeeks: totalWeeks,
       students: students,
       attendance: attendance,
       misdemeanors: misdemeanors,
       latenessReasons: latenessReasons,
-      noSchoolDays: noSchoolDays
+      noSchoolDays: noSchoolDays,
+      cleaningStatus: cleaningStatus
     };
     const dataBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -1809,6 +1953,7 @@
           misdemeanors = parsed.misdemeanors || {};
           latenessReasons = parsed.latenessReasons || {};
           noSchoolDays = parsed.noSchoolDays || {};
+          cleaningStatus = parsed.cleaningStatus || {};
           
           localStorage.setItem('bphscaTotalWeeks', totalWeeks);
           localStorage.setItem('bphscaStudents_List', JSON.stringify(students));
@@ -1816,6 +1961,7 @@
           localStorage.setItem('bphscaMisdemeanors', JSON.stringify(misdemeanors));
           localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
           localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
+          localStorage.setItem('bphscaCleaningStatus', JSON.stringify(cleaningStatus));
           
           alert("Backup data integration deployed successfully.");
           isDisplayingGrandTotals = false;
@@ -1831,7 +1977,6 @@
   updateInterfaceLanguage();
   initStickyToolbarObserver();
   
-  // Initialize dynamic placeholder fade sequence tracker
   setInterval(cycleFadingInputPlaceholder, 3000);
 </script>
 
