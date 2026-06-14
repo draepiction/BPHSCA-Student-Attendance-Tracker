@@ -119,6 +119,7 @@
       text-transform: uppercase;
       margin-bottom: 0.75rem;
       font-weight: 500;
+      margin-top: 1.5rem;
     }
 
     .week-selector-wrapper {
@@ -827,6 +828,10 @@
     </div>
   </div>
 
+  <div id="cleanerGroupsManagementContainer" style="margin-top: 2rem;">
+    <!-- Populated dynamically via JS layout builders -->
+  </div>
+
   <div id="totalsPageContainer">
     <div class="section-label" id="lblCumOverview">Cumulative Term Overview (Weeks 1-11 Aggregate Summary)</div>
     <div class="table-container">
@@ -842,6 +847,23 @@
           </tr>
         </thead>
         <tbody id="totalsTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="section-label" style="margin-top: 2rem;">Cleaner Groups Cumulative Performance Summary</div>
+    <div class="table-container">
+      <table class="totals-table">
+        <thead>
+          <tr>
+            <th style="width: 150px;">Group Identity</th>
+            <th>Active Dynamic Members</th>
+            <th class="text-center" style="color: var(--color-att);">Total "Good" Ratings</th>
+            <th class="text-center" style="color: var(--color-abs);">Total "Needs Work" Ratings</th>
+            <th class="text-center">Net Score</th>
+            <th class="text-center" style="width: 190px;">Performance Status Evaluation</th>
+          </tr>
+        </thead>
+        <tbody id="groupsTotalsTableBody"></tbody>
       </table>
     </div>
   </div>
@@ -931,7 +953,7 @@
   ];
   let activePlaceholderNameIndex = 0;
 
-  const groupMembers = {
+  let groupMembers = {
     1: ["Angelo Salazar", "Dave Falogme", "Jewel Barrameda", "Jerica De la Cruz"],
     2: ["Andrew Papa", "Justin Evangelista", "Trixie Martizana", "Justine Kaye Balina", "Mariel Labatique"],
     3: ["Kenedy Nieves", "Vince Datinguinoo", "Jhoan Mae Coliat", "Althea Masangcay"],
@@ -1232,8 +1254,16 @@
       latenessReasons = JSON.parse(localStorage.getItem('bphscaLatenessReasons')) || {};
       noSchoolDays = JSON.parse(localStorage.getItem('bphscaNoSchoolDays')) || {};
       cleaningStatus = JSON.parse(localStorage.getItem('bphscaCleaningStatus')) || {};
+      
+      let cachedGroups = localStorage.getItem('bphscaGroupMembers');
+      if (cachedGroups) {
+        groupMembers = JSON.parse(cachedGroups);
+      } else {
+        localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
+      }
     } catch(err) {
       attendance = {}; misdemeanors = {}; latenessReasons = {}; noSchoolDays = {}; cleaningStatus = {};
+      groupMembers = { 1: [], 2: [], 3: [], 4: [], 5: [] };
     }
   }
 
@@ -1295,23 +1325,15 @@
     let targetWeekPrefix = `W${totalWeeks}-`;
     let blockAndWarn = false;
 
-    for (let key in attendance) {
-      if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
+    for (let key in attendance) { if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; } }
+    if (!blockAndWarn) {
+      for (let key in misdemeanors) { if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; } }
     }
     if (!blockAndWarn) {
-      for (let key in misdemeanors) {
-        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
-      }
+      for (let key in latenessReasons) { if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; } }
     }
     if (!blockAndWarn) {
-      for (let key in latenessReasons) {
-        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
-      }
-    }
-    if (!blockAndWarn) {
-      for (let key in cleaningStatus) {
-        if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; }
-      }
+      for (let key in cleaningStatus) { if (key.startsWith(targetWeekPrefix)) { blockAndWarn = true; break; } }
     }
     if (!blockAndWarn) {
       ['mon', 'tue', 'wed', 'thu', 'fri'].forEach(d => {
@@ -1397,6 +1419,36 @@
     return result;
   }
 
+  function computeGroupPerformanceStats() {
+    let stats = {
+      1: { good: 0, needs: 0 },
+      2: { good: 0, needs: 0 },
+      3: { good: 0, needs: 0 },
+      4: { good: 0, needs: 0 },
+      5: { good: 0, needs: 0 }
+    };
+    const areas = ["Room", "Stairs", "Hallway", "Front Ground", "Pathway & Side Ground"];
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri'];
+
+    for (let w = 1; w <= totalWeeks; w++) {
+      areas.forEach(area => {
+        days.forEach(day => {
+          if (noSchoolDays[`W${w}-${day}`]) return;
+          const key = `W${w}-${area}-${day}`;
+          const status = cleaningStatus[key];
+          if (status === 'good') {
+            const grp = cleaningSchedule[area][day];
+            if (stats[grp]) stats[grp].good++;
+          } else if (status === 'needs') {
+            const grp = cleaningSchedule[area][day];
+            if (stats[grp]) stats[grp].needs++;
+          }
+        });
+      });
+    }
+    return stats;
+  }
+
   function renderCleanersRotation() {
     const tbody = document.getElementById('cleanersTableBody');
     if (!tbody) return;
@@ -1430,7 +1482,16 @@
         }
 
         const groupNum = cleaningSchedule[area][day];
-        const membersList = groupMembers[groupNum].join(', ');
+        const rawMembers = groupMembers[groupNum] || [];
+        const resolvedNames = rawMembers.map(m => {
+          const match = students.find(s => s.id === m);
+          return match ? match.name : m;
+        });
+
+        const membersList = resolvedNames.join(', ') || 'No members';
+        const firstMember = resolvedNames[0] || 'Empty Group';
+        const countRemaining = resolvedNames.length > 1 ? ` +${resolvedNames.length - 1} more` : '';
+        
         const key = `W${activeWeek}-${area}-${day}`;
         const currentStatus = cleaningStatus[key] || 'pending';
 
@@ -1440,7 +1501,7 @@
         td.innerHTML = `
           <div class="clean-group">
             <span style="font-weight: 500; color: var(--text);">Group ${groupNum}</span>
-            <span class="clean-meta" title="${membersList}">${groupMembers[groupNum][0]} +${groupMembers[groupNum].length - 1} more</span>
+            <span class="clean-meta" title="${membersList}">${firstMember}${countRemaining}</span>
             <div class="clean-status-bar">
               <button type="button" class="clean-status-btn good ${currentStatus === 'good' ? 'active' : ''}" onclick="setCleaningStatus('${area}', '${day}', 'good')">Good</button>
               <button type="button" class="clean-status-btn needs ${currentStatus === 'needs' ? 'active' : ''}" onclick="setCleaningStatus('${area}', '${day}', 'needs')">Needs Work</button>
@@ -1452,6 +1513,116 @@
 
       tbody.appendChild(tr);
     });
+  }
+
+  function renderGroupManagementControls() {
+    const container = document.getElementById('cleanerGroupsManagementContainer');
+    if (!container) return;
+
+    if (isDisplayingGrandTotals) {
+      container.style.display = 'none';
+      return;
+    }
+    container.style.display = 'block';
+
+    let gridHtml = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(224px, 1fr)); gap: 12px; margin-top: 0.5rem;">`;
+
+    for (let gNum = 1; gNum <= 5; gNum++) {
+      gridHtml += `
+        <div style="background: var(--bg2); border: 0.5px solid var(--border); padding: 12px; border-radius: 6px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="font-weight: bold; font-size: 11px; border-bottom: 0.5px solid var(--border); padding-bottom: 4px; color: var(--accent); display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; letter-spacing: 0.02em;">
+            <span>Group ${gNum} Members</span>
+            <span style="font-size: 10px; color: var(--muted); font-weight: normal;">${(groupMembers[gNum] || []).length} items</span>
+          </div>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 4px; max-height: 180px; overflow-y: auto; padding-right: 2px;">
+      `;
+
+      const mList = groupMembers[gNum] || [];
+      if (mList.length === 0) {
+        gridHtml += `<li style="font-size: 10px; color: var(--muted); font-style: italic; text-align: center; padding: 10px 0;">No members assigned</li>`;
+      }
+
+      mList.forEach((member, index) => {
+        let displayName = member;
+        const matchingStudent = students.find(s => s.id === member);
+        if (matchingStudent) displayName = matchingStudent.name;
+
+        gridHtml += `
+          <li style="font-size: 11px; display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 0.5px solid var(--border); padding: 4px 6px; border-radius: 4px;">
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 105px;" title="${displayName}">${displayName}</span>
+            <div style="display: flex; gap: 4px; align-items: center;">
+              <select onchange="moveGroupMember(${gNum}, this.value, ${index})" style="font-family: var(--font-mono); font-size: 9px; background: var(--bg2); color: var(--text); border: 0.5px solid var(--border); border-radius: 3px; padding: 1px; cursor: pointer;">
+                <option value="" disabled selected>Move</option>
+                ${[1,2,3,4,5].filter(n => n !== gNum).map(n => `<option value="${n}">G${n}</option>`).join('')}
+              </select>
+              <button type="button" onclick="removeGroupMember(${gNum}, ${index})" style="background: none; border: none; color: var(--color-abs); cursor: pointer; font-weight: bold; font-size: 13px; padding: 0 2px;" title="Remove Member">&times;</button>
+            </div>
+          </li>
+        `;
+      });
+
+      gridHtml += `
+          </ul>
+          <div style="margin-top: auto; padding-top: 6px; border-top: 0.5px dashed var(--border); display: flex; gap: 4px;">
+            <select id="addMemberSelect-${gNum}" style="flex: 1; font-family: var(--font-mono); font-size: 10px; background: var(--bg); color: var(--text); border: 0.5px solid var(--border); border-radius: 4px; padding: 3px; outline: none;">
+              <option value="">+ Assign Student...</option>
+              ${students.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
+              <option value="CUSTOM_RAW">Custom Label...</option>
+            </select>
+            <button type="button" onclick="handleAddMemberTrigger(${gNum})" class="tool-btn" style="padding: 2px 8px; font-size: 10px; border-radius: 4px; margin: 0; background: var(--bg3);">Add</button>
+          </div>
+        </div>
+      `;
+    }
+
+    gridHtml += `</div>`;
+    container.innerHTML = `<div class="section-label">Cleaner Groups Directory & Rotational Structure</div>` + gridHtml;
+  }
+
+  function handleAddMemberTrigger(groupNum) {
+    const selectEl = document.getElementById(`addMemberSelect-${groupNum}`);
+    if (!selectEl) return;
+    const value = selectEl.value;
+    if (!value) return;
+
+    if (value === 'CUSTOM_RAW') {
+      const customName = prompt("Enter custom cleaner identity or name string:");
+      if (customName && customName.trim() !== '') {
+        if (!groupMembers[groupNum]) groupMembers[groupNum] = [];
+        groupMembers[groupNum].push(customName.trim());
+        localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
+        renderDashboard();
+      }
+    } else {
+      if (!groupMembers[groupNum]) groupMembers[groupNum] = [];
+      if (groupMembers[groupNum].includes(value)) {
+        alert("Target student entity is already logged inside this specific group configuration.");
+        return;
+      }
+      groupMembers[groupNum].push(value);
+      localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
+      renderDashboard();
+    }
+  }
+
+  function removeGroupMember(groupNum, index) {
+    if (groupMembers[groupNum] && groupMembers[groupNum][index] !== undefined) {
+      groupMembers[groupNum].splice(index, 1);
+      localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
+      renderDashboard();
+    }
+  }
+
+  function moveGroupMember(fromGroup, toGroup, index) {
+    toGroup = parseInt(toGroup);
+    if (!toGroup || fromGroup === toGroup) return;
+    if (groupMembers[fromGroup] && groupMembers[fromGroup][index] !== undefined) {
+      const item = groupMembers[fromGroup].splice(index, 1)[0];
+      if (!groupMembers[toGroup]) groupMembers[toGroup] = [];
+      groupMembers[toGroup].push(item);
+      localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
+      renderDashboard();
+    }
   }
 
   function setCleaningStatus(area, day, status) {
@@ -1477,6 +1648,7 @@
       weeklyGridContainer.style.display = 'none';
       totalsPageContainer.style.display = 'block';
       document.getElementById('cleanersGridContainer').style.display = 'none';
+      document.getElementById('cleanerGroupsManagementContainer').style.display = 'none';
       panelContextLabel.textContent = dict.contextTotals;
       renderTotalsPage(datasetToRender);
       calculateGlobalMetrics();
@@ -1633,6 +1805,7 @@
     document.getElementById('stat-total-exempt').innerHTML = `${weekExemptDays}<span class="lbl">Days</span>`;
 
     renderCleanersRotation();
+    renderGroupManagementControls();
   }
 
   function renderTotalsPage(dataset) {
@@ -1671,6 +1844,66 @@
       `;
       tbody.appendChild(tr);
     });
+
+    renderGroupsPerformanceSection();
+  }
+
+  function renderGroupsPerformanceSection() {
+    const gtBody = document.getElementById('groupsTotalsTableBody');
+    if (!gtBody) return;
+    gtBody.innerHTML = '';
+
+    const groupStats = computeGroupPerformanceStats();
+
+    let bestNet = -Infinity;
+    let worstNet = Infinity;
+    let baselineLogged = false;
+
+    for (let g = 1; g <= 5; g++) {
+      let score = groupStats[g].good - groupStats[g].needs;
+      if (groupStats[g].good > 0 || groupStats[g].needs > 0) {
+        baselineLogged = true;
+      }
+      if (score > bestNet) bestNet = score;
+      if (score < worstNet) worstNet = score;
+    }
+
+    for (let g = 1; g <= 5; g++) {
+      const stats = groupStats[g];
+      const netScore = stats.good - stats.needs;
+      
+      const resolvedNames = (groupMembers[g] || []).map(m => {
+        const s = students.find(stud => stud.id === m);
+        return s ? s.name : m;
+      });
+      const membersText = resolvedNames.join(', ') || 'No assigned group members';
+
+      let evaluationLabel = '<span style="color: var(--muted);">Neutral (No Track logs)</span>';
+      if (baselineLogged) {
+        if (netScore === bestNet && bestNet !== worstNet) {
+          evaluationLabel = '<span style="color: var(--color-att); font-weight: bold;">🏆 Best Performance (Most Efficent)</span>';
+        } else if (netScore === worstNet && bestNet !== worstNet) {
+          evaluationLabel = '<span style="color: var(--color-abs); font-weight: bold;">⚠️ Needs Work (Worst Rating)</span>';
+        } else if (netScore > 0) {
+          evaluationLabel = '<span style="color: var(--color-att);">Satisfactory Track</span>';
+        } else if (netScore < 0) {
+          evaluationLabel = '<span style="color: var(--color-late);">Unsatisfactory Progress</span>';
+        } else {
+          evaluationLabel = '<span style="color: var(--text);">Balanced Baseline</span>';
+        }
+      }
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>Group ${g}</strong></td>
+        <td style="font-size: 10px; color: var(--muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${membersText}">${membersText}</td>
+        <td class="text-center" style="color: var(--color-att); font-weight: bold;">${stats.good}</td>
+        <td class="text-center" style="color: var(--color-abs); font-weight: bold;">${stats.needs}</td>
+        <td class="text-center" style="font-weight: bold; color: ${netScore >= 0 ? 'var(--color-att)' : 'var(--color-abs)'};">${netScore > 0 ? '+' : ''}${netScore}</td>
+        <td class="text-center">${evaluationLabel}</td>
+      `;
+      gtBody.appendChild(tr);
+    }
   }
 
   function calculateGlobalMetrics() {
@@ -1853,9 +2086,7 @@
     const labelDays = { mon: "Mon", tue: "Tue", wed: "Wed", thu: "Thu", fri: "Fri" };
     
     for (let w = 1; w <= totalWeeks; w++) {
-      dayKeys.forEach(d => {
-        headers.push(`W${w}-${labelDays[d]}`);
-      });
+      dayKeys.forEach(d => { headers.push(`W${w}-${labelDays[d]}`); });
     }
     
     headers.push("Total Attended", "Total Late", "Total Absent", "Total Misdemeanors", "Total Exempt Days");
@@ -1863,9 +2094,7 @@
     
     let totExempt = 0;
     for (let w = 1; w <= totalWeeks; w++) {
-      dayKeys.forEach(day => {
-        if (noSchoolDays[`W${w}-${day}`]) totExempt++;
-      });
+      dayKeys.forEach(day => { if (noSchoolDays[`W${w}-${day}`]) totExempt++; });
     }
 
     students.forEach(s => {
@@ -1896,12 +2125,8 @@
           else if (status === 'late') cellValueStr = "Late";
           else if (status === 'absent') cellValueStr = "Abs";
           
-          if (listReasons.length > 0) {
-            cellValueStr += ` (${listReasons.join("; ")})`;
-          }
-          if (listMisd.length > 0) {
-            cellValueStr += ` [Misd: ${listMisd.join("; ")}]`;
-          }
+          if (listReasons.length > 0) cellValueStr += ` (${listReasons.join("; ")})`;
+          if (listMisd.length > 0) cellValueStr += ` [Misd: ${listMisd.join("; ")}]`;
           
           rowData.push(`"${cellValueStr.replace(/"/g, '""')}"`);
         });
@@ -1921,14 +2146,15 @@
 
   function exportDataBackup() {
     const payload = {
-      version: "5.3-MatrixWithCleaners",
+      version: "5.4-MatrixWithCleanersManagement",
       totalWeeks: totalWeeks,
       students: students,
       attendance: attendance,
       misdemeanors: misdemeanors,
       latenessReasons: latenessReasons,
       noSchoolDays: noSchoolDays,
-      cleaningStatus: cleaningStatus
+      cleaningStatus: cleaningStatus,
+      groupMembers: groupMembers
     };
     const dataBlob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -1954,6 +2180,7 @@
           latenessReasons = parsed.latenessReasons || {};
           noSchoolDays = parsed.noSchoolDays || {};
           cleaningStatus = parsed.cleaningStatus || {};
+          groupMembers = parsed.groupMembers || { 1: [], 2: [], 3: [], 4: [], 5: [] };
           
           localStorage.setItem('bphscaTotalWeeks', totalWeeks);
           localStorage.setItem('bphscaStudents_List', JSON.stringify(students));
@@ -1962,6 +2189,7 @@
           localStorage.setItem('bphscaLatenessReasons', JSON.stringify(latenessReasons));
           localStorage.setItem('bphscaNoSchoolDays', JSON.stringify(noSchoolDays));
           localStorage.setItem('bphscaCleaningStatus', JSON.stringify(cleaningStatus));
+          localStorage.setItem('bphscaGroupMembers', JSON.stringify(groupMembers));
           
           alert("Backup data integration deployed successfully.");
           isDisplayingGrandTotals = false;
